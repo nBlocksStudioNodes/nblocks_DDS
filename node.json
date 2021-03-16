@@ -1,0 +1,59 @@
+{
+    "category": "Function",
+    "name": "DDS",
+    "inputs": 1,
+    "outputs": 1,
+    "parameters": [
+        {
+            "name": "pinMOSI",
+            "type": "raw",
+            "default": "p5",
+            "options": [
+                ""
+            ],
+            "value": "p5"
+        },
+        {
+            "name": "pinSCK",
+            "type": "raw",
+            "default": "p7",
+            "options": [
+                ""
+            ],
+            "value": "p7"
+        },
+        {
+            "name": "pinSelect",
+            "type": "raw",
+            "default": "p14",
+            "options": [
+                ""
+            ],
+            "value": "p14"
+        },
+        {
+            "name": "FreqDefault",
+            "type": "int",
+            "default": 40000,
+            "options": [
+                ""
+            ],
+            "value": 40000
+        }
+    ],
+    "labels": {
+        "input": [],
+        "output": []
+    },
+    "schematic_pins": {
+        "inputs": [
+            1,
+            2
+        ],
+        "outputs": [
+            0
+        ]
+    },
+    "repository": "https://github.com/nBlocksStudioNodes/nblocks_dds",
+    "revision": ""
+}

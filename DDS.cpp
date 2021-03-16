@@ -1,25 +1,25 @@
-#include "DDS.h"                                       // for RESERVE pin21(P2_5) as PWM1[6], ATTENTION: this style brakes the nblocksStudio common practice
+#include "DDS.h"                                        // for RESERVE pin21(P2_5) as PWM1[6], ATTENTION: this style brakes the nblocksStudio common practice
 // DDS
 nBlock_DDS::nBlock_DDS(PinName MOSI, PinName SCK, PinName pinSelect, uint32_t freqDefault):
     spi(MOSI, NC, SCK), 
     _fsync(pinSelect) {     
 
     _spi.format(16,2);               
-    _spi.frequency(1000000);         
+    _spi._frequency(1000000);         
     _fsync = 1;
-    frequency = freqDefault; 
-    function = SINUS;       
+    _frequency = freqDefault; 
+    _function = SINUS;       
 }
 
 void nBlock_DDS::triggerInput(uint32_t inputNumber, uint32_t value) // Scan the inputs and prepare Carrot
     {   	
     PwmOut fmclck(P2_5); 
     if (inputNumber == 0){
-        frequency = message.intValue;
+        _frequency = message.intValue;
         Position1 = 1;              
     }
     if(inputNumber ==1){
-        function = message.intValue;
+        _function = message.intValue;
         Position2 = 1;
     } 
                   									 
@@ -27,7 +27,7 @@ void nBlock_DDS::triggerInput(uint32_t inputNumber, uint32_t value) // Scan the 
 
 void nBlock_DDS::endFrame(void){    
 	if (Position1) {
-        setFreq(frequency);
+        setFreq(_frequency);
 		Position1 = 0;
 		
     }

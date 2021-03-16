@@ -24,8 +24,8 @@ public:
     void triggerInput(nBlocks_Message message);
 	void endFrame();
 
-    uint32_t frequency;
-    uint32_t function;
+    uint32_t _frequency;
+    uint32_t _function;
 
 private:
     SPI _spi;
