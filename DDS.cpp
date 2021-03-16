@@ -1,52 +1,114 @@
 #include "DDS.h"                                       // for RESERVE pin21(P2_5) as PWM1[6], ATTENTION: this style brakes the nblocksStudio common practice
 // DDS
-nBlock_DDS::nBlock_DDS(uint32_t THECLOCK, uint32_t freq){     // Constructor, One Parameter: THECLOCK of the LPC1768
-    uint32_t system_clock;
-    int32_t divider;// = 96000;
-    system_clock = THECLOCK;
-    divider = system_clock/freq;
-PwmOut fmclck(P2_5); 
-    LPC_PWM1->TCR = (1 << 1);               				// 1)Reset counter, disable PWM
-    LPC_SC->PCLKSEL0 &= ~(0x3 << 12);  
-    LPC_SC->PCLKSEL0 |= (1 << 12);          				// 2)Set peripheral clock divider to /1, i.e. system clock
-    LPC_PWM1->MR0 = divider - 1;            				// 3)Match Register 0 is shared period counter for all PWM1
-    LPC_PWM1->MR6 = (divider + 1)>> 1;      				// divider=96000 for 1KHz when inputs are not connected
-    LPC_PWM1->LER |= 1;                  					       
-    LPC_PWM1->TCR = (1 << 0) || (1 << 3);                   // 5)Enable counter and PWM 
+nBlock_DDS::nBlock_DDS(PinName MOSI, PinName SCK, PinName pinSelect, uint32_t freqDefault):
+    spi(MOSI, NC, SCK), 
+    _fsync(pinSelect) {     
 
-    return;
+    _spi.format(16,2);               
+    _spi.frequency(1000000);         
+    _fsync = 1;
+    frequency = freqDefault; 
+    function = SINUS;       
 }
-uint32_t nBlock_DDS::outputAvailable(uint32_t outputNumber) { //Check for available Carrots
-    return internal_fifo.available();
-}
-uint32_t nBlock_DDS::readOutput(uint32_t outputNumber) {  // Pass the Carrot to the Next
-    uint32_t tmp;
-    internal_fifo.read(&tmp);
-    return tmp;
-}
+
 void nBlock_DDS::triggerInput(uint32_t inputNumber, uint32_t value) // Scan the inputs and prepare Carrot
     {   	
-	uint32_t outFrequency;
-    int32_t divider;
     PwmOut fmclck(P2_5); 
-    if (inputNumber == 0){                                      // "value" contains the Frequency
-	    divider = system_clock/value;
-	    outFrequency = system_clock/divider;
-	    LPC_PWM1->TCR = (1 << 1);               				// 1)Reset counter, disable PWM
-        LPC_SC->PCLKSEL0 &= ~(0x3 << 12);  
-        LPC_SC->PCLKSEL0 |= (1 << 12);          				// 2)Set peripheral clock divider to /1, i.e. system clock
-        LPC_PWM1->MR0 = divider - 1;            				// 3)Match Register 0 is shared period counter for all PWM1
-        LPC_PWM1->MR6 = (divider + 1)>> 1;      				// 
-        LPC_PWM1->LER |= 1;                     			    // 4)Start updating at next period start                       
+    if (inputNumber == 0){
+        frequency = message.intValue;
+        Position1 = 1;              
     }
-    if(inputNumber ==1){                                        // "value" contains the ENABLE
-        if(value > 0 ) {LPC_PWM1->TCR = (1 << 0) || (1 << 3); } // 5)Enable counter and PWM 
-	    if(value == 0) {LPC_PWM1->TCR = (1 << 1);             } // 1)Reset counter, disable PWM 
+    if(inputNumber ==1){
+        function = message.intValue;
+        Position2 = 1;
     } 
-    internal_fifo.put(outFrequency);                            // pass calculated outFrequency to fifo	              									 
+                  									 
 }
-void nBlock_DDS::step(void) {
-    uint32_t tmp;
-    internal_fifo.get(&tmp);
-    return;
+
+void nBlock_DDS::endFrame(void){    
+	if (Position1) {
+        setFreq(frequency);
+		Position1 = 0;
+		
+    }
+	if (Position2) {
+        setFunction(function);
+		Position2 = 0;
+		
+	}	
+}
+
+
+void setFreq(uint32_t FREQ) {       ** TO UPDATE **
+    int32_t freq_MSB;   //define freq MSB reg value
+    int32_t freq_LSB;   //define freq LSB reg value
+    uint32_t freq_cal;  //define freq calculated value
+    float freq_val = 0.00000000;    //define ferq calculate tempotary value
+    freq_val = (((float)(FREQ))/25000000);
+    freq_cal = freq_val*0x10000000;
+    freq_MSB = (int)((freq_cal & 0xFFFC000)>>14); // shift 14 bits
+    freq_LSB = (int)(freq_cal & 0x3FFF);
+    freq_MSB = freq_MSB | 0x4000;  //assign freq reg address (D14=1)
+    freq_LSB = freq_LSB | 0x4000;
+    printf("freq_MSB 0x%x freq_LSB 0x%x\n\r", freq_MSB, freq_LSB);
+
+    cRegister = setBit(cRegister,  B28);
+    cRegister = setBit(cRegister,  RESET);
+    // write_SPI(0x2100);      //write control reg - apply reset | D13 (B28) =1 | D8(RESET) =1
+    printf("cRegister 0x%x\n\r", cRegister);
+    write_SPI(cRegister); 
+    write_SPI(freq_LSB);    //write freq reg - LSB
+    write_SPI(freq_MSB);    //write freq reg - MSB
+    write_SPI(0xC000);      //write phase reg - 0 for now  PHASE0: address=CC, content=000
+    //cRegister = setBit(cRegister,  TRIANGLE);
+    cRegister = setBit(cRegister,  SQUARE1);
+    cRegister = setBit(cRegister,  SQUARE2);
+    cRegister = clearBit(cRegister,  RESET);
+    write_SPI(cRegister);
+    //write_SPI(TRIANGLE_WAVE);      //write control reg - disable reset
+}
+
+void setFunction(uint32_t FUNCTION) { // *********** to UPDATE THIS FOR FUNCTION ONLY *************
+    int32_t freq_MSB;   //define freq MSB reg value
+    int32_t freq_LSB;   //define freq LSB reg value
+    uint32_t freq_cal;  //define freq calculated value
+    float freq_val = 0.00000000;    //define ferq calculate tempotary value
+    freq_val = (((float)(FREQ))/25000000);
+    freq_cal = freq_val*0x10000000;
+    freq_MSB = (int)((freq_cal & 0xFFFC000)>>14); // shift 14 bits
+    freq_LSB = (int)(freq_cal & 0x3FFF);
+    freq_MSB = freq_MSB | 0x4000;  //assign freq reg address (D14=1)
+    freq_LSB = freq_LSB | 0x4000;
+    printf("freq_MSB 0x%x freq_LSB 0x%x\n\r", freq_MSB, freq_LSB);
+
+    cRegister = setBit(cRegister,  B28);
+    cRegister = setBit(cRegister,  RESET);
+    // write_SPI(0x2100);      //write control reg - apply reset | D13 (B28) =1 | D8(RESET) =1
+    printf("cRegister 0x%x\n\r", cRegister);
+    write_SPI(cRegister); 
+    write_SPI(freq_LSB);    //write freq reg - LSB
+    write_SPI(freq_MSB);    //write freq reg - MSB
+    write_SPI(0xC000);      //write phase reg - 0 for now  PHASE0: address=CC, content=000
+    //cRegister = setBit(cRegister,  TRIANGLE);
+    cRegister = setBit(cRegister,  SQUARE1);
+    cRegister = setBit(cRegister,  SQUARE2);
+    cRegister = clearBit(cRegister,  RESET);
+    write_SPI(cRegister);
+    //write_SPI(TRIANGLE_WAVE);      //write control reg - disable reset
+}
+
+void write_SPI(uint16_t dat) {
+    fSync = 0;
+    AD9833_SPI.write(dat);
+    fSync = 1;
+}
+
+uint16_t setBit(uint16_t reg, uint16_t bit){
+    reg |= 1UL << bit;
+    return reg;
+}
+
+uint16_t clearBit(uint16_t reg, uint16_t bit){
+    reg &= ~(1UL << bit);
+    return reg;
 }

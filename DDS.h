@@ -3,17 +3,34 @@
 
 #include "nworkbench.h"
 
-class nBlock_DDS: public nBlockNode {
+class nBlock_DDS: public nBlockNode<1> {
 public:
-    nBlock_DDS(uint32_t THECLOCK, uint32_t freq);
-    uint32_t outputAvailable(uint32_t outputNumber);
-    uint32_t readOutput(uint32_t outputNumber);
-    void triggerInput(uint32_t inputNumber, uint32_t value);
-    void step(void);
+    nBlock_DDS(PinName MOSI, PinName SCK, PinName pinSelect, uint32_t freqDefault);
+    uint16_t cRegister = 0; 
+    #define RESET      8     
+    #define B28       13  
+    #define TRIANGLE   1  
+    #define SQUARE1    5  
+    #define SQUARE2    3
+    #define SINUS      0
+   
+    uint16_t setBit(uint16_t reg, uint16_t bit);
+    uint16_t clearBit(uint16_t reg, uint16_t bit);
+
+    void write_SPI(uint16_t dat);
+    void setFreq(uint32_t FREQ);
+    void setFreq(uint32_t FUNCTION);
+
+    void triggerInput(nBlocks_Message message);
+	void endFrame();
+
+    uint32_t frequency;
+    uint32_t function;
+
 private:
-    fifo internal_fifo;
-    uint32_t input_0;
-    uint32_t system_clock;
+    SPI _spi;
+    DigitalOut _fsync;
+    uint32_t must_update = 0;
 };
 
 #endif
