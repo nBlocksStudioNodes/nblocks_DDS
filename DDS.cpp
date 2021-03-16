@@ -6,10 +6,11 @@ nBlock_DDS::nBlock_DDS(PinName MOSI, PinName SCK, PinName pinSelect, uint32_t fr
 
    
     _spi.format(16,2);               
-    _spi.frequency(freqDefault);         
+    _spi.frequency(1000000);         
     _fsync = 1;
     _frequency = freqDefault; 
-    _function = SINUS;       
+    _function = SINUS; 
+    setFreq(_frequency);      
 }
 
 void nBlock_DDS::triggerInput(nBlocks_Message message){ 	
