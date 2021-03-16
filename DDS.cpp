@@ -43,8 +43,8 @@ void nBlock_DDS::setFreq(uint32_t FREQ) {       //** TO UPDATE **
     int32_t freq_MSB;   //define freq MSB reg value
     int32_t freq_LSB;   //define freq LSB reg value
     uint32_t freq_cal;  //define freq calculated value
-    float freq_val = 0.00000000;    //define ferq calculate tempotary value
-    uint16_t ccRegister;
+    float freq_val = 0.00000000;    //define freq calculate temp value
+    uint16_t ccRegister=0;
 
     freq_val = (((float)(FREQ))/25000000);
     freq_cal = freq_val*0x10000000;
@@ -52,54 +52,29 @@ void nBlock_DDS::setFreq(uint32_t FREQ) {       //** TO UPDATE **
     freq_LSB = (int)(freq_cal & 0x3FFF);
     freq_MSB = freq_MSB | 0x4000;  //assign freq reg address (D14=1)
     freq_LSB = freq_LSB | 0x4000;
-    printf("freq_MSB 0x%x freq_LSB 0x%x\n\r", freq_MSB, freq_LSB);
 
     ccRegister = setBit(ccRegister,  B28);
     ccRegister = setBit(ccRegister,  RESET);
-    // write_SPI(0x2100);      //write control reg - apply reset | D13 (B28) =1 | D8(RESET) =1
-    printf("ccRegister 0x%x\n\r", ccRegister);
     write_SPI(ccRegister); 
     write_SPI(freq_LSB);    //write freq reg - LSB
     write_SPI(freq_MSB);    //write freq reg - MSB
     write_SPI(0xC000);      //write phase reg - 0 for now  PHASE0: address=CC, content=000
-    //ccRegister = setBit(ccRegister,  TRIANGLE);
-    ccRegister = setBit(ccRegister,  SQUARE1);
-    ccRegister = setBit(ccRegister,  SQUARE2);
+    ccRegister = clearBit(ccRegister,  SQUARE1);
+    ccRegister = clearBit(ccRegister,  SQUARE2);
+    ccRegister = clearBit(ccRegister,  TRIANGLE);
+    write_SPI(ccRegister);
     ccRegister = clearBit(ccRegister,  RESET);
     write_SPI(ccRegister);
-    //write_SPI(TRIANGLE_WAVE);      //write control reg - disable reset
 }
 
-
-
-void nBlock_DDS::setFunction(uint32_t FUNCTION) { // *********** to UPDATE THIS FOR FUNCTION ONLY *************
-/**    int32_t freq_MSB;   //define freq MSB reg value
-    int32_t freq_LSB;   //define freq LSB reg value
-    uint32_t freq_cal;  //define freq calculated value
-    float freq_val = 0.00000000;    //define ferq calculate tempotary value
-    freq_val = (((float)(FREQ))/25000000);
-    freq_cal = freq_val*0x10000000;
-    freq_MSB = (int)((freq_cal & 0xFFFC000)>>14); // shift 14 bits
-    freq_LSB = (int)(freq_cal & 0x3FFF);
-    freq_MSB = freq_MSB | 0x4000;  //assign freq reg address (D14=1)
-    freq_LSB = freq_LSB | 0x4000;
-    printf("freq_MSB 0x%x freq_LSB 0x%x\n\r", freq_MSB, freq_LSB);
-
-    ccRegister = setBit(ccRegister,  B28);
+void nBlock_DDS::setFunction(uint32_t FUNCTION) { 
     ccRegister = setBit(ccRegister,  RESET);
-    // write_SPI(0x2100);      //write control reg - apply reset | D13 (B28) =1 | D8(RESET) =1
-    printf("ccRegister 0x%x\n\r", ccRegister);
-    write_SPI(ccRegister); 
-    write_SPI(freq_LSB);    //write freq reg - LSB
-    write_SPI(freq_MSB);    //write freq reg - MSB
-    write_SPI(0xC000);      //write phase reg - 0 for now  PHASE0: address=CC, content=000
-    //ccRegister = setBit(ccRegister,  TRIANGLE);
-    ccRegister = setBit(ccRegister,  SQUARE1);
-    ccRegister = setBit(ccRegister,  SQUARE2);
-    ccRegister = clearBit(ccRegister,  RESET);
     write_SPI(ccRegister);
-    //write_SPI(TRIANGLE_WAVE);      //write control reg - disable reset
-    **/
+    if(_function ==1) ccRegister = setBit(ccRegister,  SINUS); 
+    if(_function ==2) ccRegister = setBit(ccRegister,  SQUARE1);
+    if(_function ==3) ccRegister = setBit(ccRegister,  TRIANGLE);
+    ccRegister = clearBit(ccRegister,  RESET);
+    write_SPI(ccRegister);   
 }
 
 void nBlock_DDS::write_SPI(uint16_t dat) {
