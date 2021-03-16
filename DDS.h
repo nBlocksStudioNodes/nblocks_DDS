@@ -3,7 +3,7 @@
 
 #include "nworkbench.h"
 
-class nBlock_DDS: public nBlockNode<1> {
+class nBlock_DDS: public nBlockSimpleNode<1> {
 public:
     nBlock_DDS(PinName MOSI, PinName SCK, PinName pinSelect, uint32_t freqDefault);
     uint16_t cRegister = 0; 
@@ -19,17 +19,22 @@ public:
 
     void write_SPI(uint16_t dat);
     void setFreq(uint32_t FREQ);
-    void setFreq(uint32_t FUNCTION);
+    void setFunction(uint32_t FUNCTION);
 
-    void triggerInput(nBlocks_Message message);
+    void        triggerInput(nBlocks_Message message);
 	void endFrame();
 
     uint32_t _frequency;
     uint32_t _function;
+    uint16_t ccRegister = 0; 
+
+    uint32_t    Position1;
+    uint32_t    Position2;
+    DigitalOut _fsync;
 
 private:
     SPI _spi;
-    DigitalOut _fsync;
+
     uint32_t must_update = 0;
 };
 
