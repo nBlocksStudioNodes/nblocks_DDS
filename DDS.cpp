@@ -14,7 +14,6 @@ nBlock_DDS::nBlock_DDS(PinName MOSI, PinName SCK, PinName pinSelect, uint32_t fr
 }
 
 void nBlock_DDS::triggerInput(nBlocks_Message message){ 	
-    PwmOut fmclck(P2_5); 
     if (message.inputNumber == 0){
         _frequency = message.intValue;
         Position1 = 1;              
