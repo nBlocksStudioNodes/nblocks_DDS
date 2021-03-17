@@ -32,6 +32,8 @@ void nBlock_DDS::endFrame(void){
 		
     }
 	if (Position2) {
+        //_function++;
+        //if(_function >3)  _function =0;
         setFunction(_function);
 		Position2 = 0;
 		
@@ -54,7 +56,7 @@ void nBlock_DDS::setFreq(uint32_t FREQ) {       //** TO UPDATE **
     freq_LSB = freq_LSB | 0x4000;
 
     ccRegister = setBit(ccRegister,  B28);
-    ccRegister = setBit(ccRegister,  RST);
+    ccRegister = setBit(ccRegister,  RESET);
     write_SPI(ccRegister); 
     write_SPI(freq_LSB);    //write freq reg - LSB
     write_SPI(freq_MSB);    //write freq reg - MSB
@@ -63,20 +65,32 @@ void nBlock_DDS::setFreq(uint32_t FREQ) {       //** TO UPDATE **
     ccRegister = clearBit(ccRegister,  SQUARE2);
     ccRegister = clearBit(ccRegister,  TRIANGLE);
     write_SPI(ccRegister);
-    ccRegister = clearBit(ccRegister,  RST);
+    ccRegister = clearBit(ccRegister,  RESET);
     write_SPI(ccRegister);
 }
 
 void nBlock_DDS::setFunction(uint32_t FUNCTION) { 
-    ccRegister = setBit(ccRegister,  RST);
+    ccRegister = setBit(ccRegister,  RESET);
     write_SPI(ccRegister);
-    if(_function ==1) ccRegister = setBit(ccRegister,  SINUS); 
+    if(_function ==1) {
+        ccRegister = clearBit(ccRegister,  SQUARE1);
+        ccRegister = clearBit(ccRegister,  SQUARE2);
+        ccRegister = clearBit(ccRegister,  TRIANGLE);
+        ccRegister = setBit(ccRegister,  SINUS);
+    } 
     if(_function ==2) {
+        ccRegister = clearBit(ccRegister,  SINUS);
+        ccRegister = clearBit(ccRegister,  TRIANGLE);
         ccRegister = setBit(ccRegister,  SQUARE1);
         ccRegister = setBit(ccRegister,  SQUARE2);
     }
-    if(_function ==3) ccRegister = setBit(ccRegister,  TRIANGLE);
-    ccRegister = clearBit(ccRegister,  RST);
+    if(_function ==3) {
+        ccRegister = clearBit(ccRegister,  SINUS);
+        ccRegister = clearBit(ccRegister,  SQUARE1);
+        ccRegister = clearBit(ccRegister,  SQUARE2);
+        ccRegister = setBit(ccRegister,  TRIANGLE);
+    }
+    ccRegister = clearBit(ccRegister,  RESET);
     write_SPI(ccRegister);   
 }
 
