@@ -71,7 +71,10 @@ void nBlock_DDS::setFunction(uint32_t FUNCTION) {
     ccRegister = setBit(ccRegister,  RESET);
     write_SPI(ccRegister);
     if(_function ==1) ccRegister = setBit(ccRegister,  SINUS); 
-    if(_function ==2) ccRegister = setBit(ccRegister,  SQUARE1);
+    if(_function ==2) {
+        ccRegister = setBit(ccRegister,  SQUARE1);
+        ccRegister = setBit(ccRegister,  SQUARE2);
+    }
     if(_function ==3) ccRegister = setBit(ccRegister,  TRIANGLE);
     ccRegister = clearBit(ccRegister,  RESET);
     write_SPI(ccRegister);   
