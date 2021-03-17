@@ -54,7 +54,7 @@ void nBlock_DDS::setFreq(uint32_t FREQ) {       //** TO UPDATE **
     freq_LSB = freq_LSB | 0x4000;
 
     ccRegister = setBit(ccRegister,  B28);
-    ccRegister = setBit(ccRegister,  RESET);
+    ccRegister = setBit(ccRegister,  RST);
     write_SPI(ccRegister); 
     write_SPI(freq_LSB);    //write freq reg - LSB
     write_SPI(freq_MSB);    //write freq reg - MSB
@@ -63,12 +63,12 @@ void nBlock_DDS::setFreq(uint32_t FREQ) {       //** TO UPDATE **
     ccRegister = clearBit(ccRegister,  SQUARE2);
     ccRegister = clearBit(ccRegister,  TRIANGLE);
     write_SPI(ccRegister);
-    ccRegister = clearBit(ccRegister,  RESET);
+    ccRegister = clearBit(ccRegister,  RST);
     write_SPI(ccRegister);
 }
 
 void nBlock_DDS::setFunction(uint32_t FUNCTION) { 
-    ccRegister = setBit(ccRegister,  RESET);
+    ccRegister = setBit(ccRegister,  RST);
     write_SPI(ccRegister);
     if(_function ==1) ccRegister = setBit(ccRegister,  SINUS); 
     if(_function ==2) {
@@ -76,7 +76,7 @@ void nBlock_DDS::setFunction(uint32_t FUNCTION) {
         ccRegister = setBit(ccRegister,  SQUARE2);
     }
     if(_function ==3) ccRegister = setBit(ccRegister,  TRIANGLE);
-    ccRegister = clearBit(ccRegister,  RESET);
+    ccRegister = clearBit(ccRegister,  RST);
     write_SPI(ccRegister);   
 }
 
